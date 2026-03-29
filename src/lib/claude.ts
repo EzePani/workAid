@@ -1,12 +1,12 @@
-import Anthropic from '@anthropic-ai/sdk'
+import Groq from 'groq-sdk'
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
 })
 
 export async function optimizeCV(cvText: string, jobDescription: string): Promise<string> {
-  const message = await anthropic.messages.create({
-    model: 'claude-opus-4-6',
+  const completion = await groq.chat.completions.create({
+    model: 'llama-3.3-70b-versatile',
     max_tokens: 4096,
     messages: [
       {
@@ -58,9 +58,7 @@ Return ONLY the rewritten CV text, no explanations, no commentary.`,
     ],
   })
 
-  const content = message.content[0]
-  if (content.type !== 'text') throw new Error('Unexpected response type from Claude')
-  return content.text
+  return completion.choices[0].message.content ?? ''
 }
 
 export async function parseJobPosting(rawText: string): Promise<{
@@ -74,8 +72,8 @@ export async function parseJobPosting(rawText: string): Promise<{
   location: string | null
   postedAt: string | null
 }> {
-  const message = await anthropic.messages.create({
-    model: 'claude-haiku-4-5-20251001',
+  const completion = await groq.chat.completions.create({
+    model: 'llama-3.1-8b-instant',
     max_tokens: 1024,
     messages: [
       {
@@ -101,9 +99,7 @@ ${rawText}`,
     ],
   })
 
-  const content = message.content[0]
-  if (content.type !== 'text') throw new Error('Unexpected response type from Claude')
-
-  const parsed = JSON.parse(content.text)
-  return parsed
+  const text = completion.choices[0].message.content ?? '{}'
+  const cleaned = text.replace(/```json\n?|\n?```/g, '').trim()
+  return JSON.parse(cleaned)
 }
