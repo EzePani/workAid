@@ -7,7 +7,7 @@ export default function Home() {
       <h1 className="text-4xl font-bold text-gray-900 mb-3">
         Work<span className="text-blue-600">Aid</span>
       </h1>
-      <p className="text-gray-500 text-lg mb-12 max-w-xl">
+      <p className="text-gray-600 text-lg mb-12 max-w-xl">
         Optimize your CV for ATS filters and understand the job market — all in one place.
       </p>
 
@@ -20,7 +20,7 @@ export default function Home() {
             <FileText className="w-5 h-5 text-blue-600" />
           </div>
           <h2 className="text-lg font-semibold text-gray-900 mb-2">CV Optimizer</h2>
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-gray-600 mb-4">
             Upload your CV and a job description. Get an ATS-optimized, Harvard-format PDF in seconds.
           </p>
           <span className="text-sm font-medium text-blue-600 flex items-center gap-1 group-hover:gap-2 transition-all">
@@ -36,7 +36,7 @@ export default function Home() {
             <BarChart2 className="w-5 h-5 text-blue-600" />
           </div>
           <h2 className="text-lg font-semibold text-gray-900 mb-2">Job Tracker</h2>
-          <p className="text-sm text-gray-500 mb-4">
+          <p className="text-sm text-gray-600 mb-4">
             Paste job postings, extract insights automatically, and compare dozens of offers side by side.
           </p>
           <span className="text-sm font-medium text-blue-600 flex items-center gap-1 group-hover:gap-2 transition-all">

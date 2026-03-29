@@ -22,13 +22,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             <div className="flex gap-6">
               <Link
                 href="/cv-optimizer"
-                className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
+                className="text-sm font-medium text-gray-700 hover:text-blue-700 transition-colors"
               >
                 CV Optimizer
               </Link>
               <Link
                 href="/job-tracker"
-                className="text-sm font-medium text-gray-600 hover:text-blue-600 transition-colors"
+                className="text-sm font-medium text-gray-700 hover:text-blue-700 transition-colors"
               >
                 Job Tracker
               </Link>

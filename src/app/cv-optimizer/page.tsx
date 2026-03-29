@@ -71,7 +71,7 @@ export default function CVOptimizerPage() {
     <div className="max-w-2xl mx-auto">
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900">CV Optimizer</h1>
-        <p className="text-gray-500 mt-1 text-sm">
+        <p className="text-gray-600 mt-1 text-sm">
           Upload your CV and paste the job description — we&apos;ll generate an ATS-optimized 1-page PDF.
         </p>
       </div>
@@ -84,7 +84,7 @@ export default function CVOptimizerPage() {
             onClick={() => fileInputRef.current?.click()}
             onDrop={handleDrop}
             onDragOver={e => e.preventDefault()}
-            className="border-2 border-dashed border-gray-200 rounded-xl p-6 text-center cursor-pointer hover:border-blue-300 transition-colors"
+            className="border-2 border-dashed border-gray-400 rounded-xl p-6 text-center cursor-pointer hover:border-blue-500 transition-colors"
           >
             <input
               ref={fileInputRef}
@@ -99,7 +99,7 @@ export default function CVOptimizerPage() {
                 <span className="text-sm font-medium">{cvFile.name}</span>
               </div>
             ) : (
-              <div className="text-gray-400">
+              <div className="text-gray-600">
                 <Upload className="w-8 h-8 mx-auto mb-2" />
                 <p className="text-sm">Drop your PDF here or click to browse</p>
               </div>
@@ -116,7 +116,7 @@ export default function CVOptimizerPage() {
               value={jobTitle}
               onChange={e => setJobTitle(e.target.value)}
               placeholder="e.g. Product Manager"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-400 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
           <div>
@@ -126,7 +126,7 @@ export default function CVOptimizerPage() {
               value={company}
               onChange={e => setCompany(e.target.value)}
               placeholder="e.g. Google"
-              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full border border-gray-400 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
@@ -139,7 +139,7 @@ export default function CVOptimizerPage() {
             onChange={e => setJobDescription(e.target.value)}
             placeholder="Paste the full job description here..."
             rows={8}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full border border-gray-400 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
           />
         </div>
 

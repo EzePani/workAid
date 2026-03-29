@@ -111,12 +111,12 @@ export default function JobTrackerPage() {
       <div className="flex items-center justify-between mb-6">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Job Tracker</h1>
-          <p className="text-gray-500 text-sm mt-1">{jobs.length} postings tracked</p>
+          <p className="text-gray-600 text-sm mt-1">{jobs.length} postings tracked</p>
         </div>
         <div className="flex gap-2">
           <button
             onClick={handleExport}
-            className="flex items-center gap-1.5 text-sm border border-gray-200 rounded-lg px-3 py-2 hover:bg-gray-50 transition-colors"
+            className="flex items-center gap-1.5 text-sm border border-gray-400 text-gray-700 rounded-lg px-3 py-2 hover:bg-gray-100 transition-colors"
           >
             <Download className="w-4 h-4" /> Export CSV
           </button>
@@ -138,7 +138,7 @@ export default function JobTrackerPage() {
             onChange={e => setRawText(e.target.value)}
             placeholder="Paste the full job posting text from LinkedIn, Indeed, etc..."
             rows={6}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+            className="w-full border border-gray-400 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
           />
           <div className="flex gap-3">
             <input
@@ -146,7 +146,7 @@ export default function JobTrackerPage() {
               value={newCategory}
               onChange={e => setNewCategory(e.target.value)}
               placeholder="Category (auto-detected if empty)"
-              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="flex-1 border border-gray-400 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
             <button
               type="submit"
@@ -165,7 +165,7 @@ export default function JobTrackerPage() {
         <div className="flex gap-2 flex-wrap">
           <button
             onClick={() => setSelectedCategory('all')}
-            className={`text-xs px-3 py-1 rounded-full border transition-colors ${selectedCategory === 'all' ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 text-gray-600 hover:border-blue-300'}`}
+            className={`text-xs px-3 py-1 rounded-full border transition-colors ${selectedCategory === 'all' ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-400 text-gray-700 hover:border-blue-400 hover:text-blue-700'}`}
           >
             All
           </button>
@@ -173,22 +173,22 @@ export default function JobTrackerPage() {
             <button
               key={cat}
               onClick={() => setSelectedCategory(cat)}
-              className={`text-xs px-3 py-1 rounded-full border transition-colors ${selectedCategory === cat ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-200 text-gray-600 hover:border-blue-300'}`}
+              className={`text-xs px-3 py-1 rounded-full border transition-colors ${selectedCategory === cat ? 'bg-blue-600 text-white border-blue-600' : 'border-gray-400 text-gray-700 hover:border-blue-400 hover:text-blue-700'}`}
             >
               {cat}
             </button>
           ))}
         </div>
-        <div className="flex border border-gray-200 rounded-lg overflow-hidden text-sm">
+        <div className="flex border border-gray-300 rounded-lg overflow-hidden text-sm">
           <button
             onClick={() => setActiveTab('list')}
-            className={`px-3 py-1.5 ${activeTab === 'list' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50'}`}
+            className={`px-3 py-1.5 transition-colors ${activeTab === 'list' ? 'bg-gray-200 text-gray-900 font-semibold' : 'text-gray-700 hover:bg-gray-100'}`}
           >
             List
           </button>
           <button
             onClick={() => setActiveTab('insights')}
-            className={`px-3 py-1.5 ${activeTab === 'insights' ? 'bg-gray-100 font-medium' : 'hover:bg-gray-50'}`}
+            className={`px-3 py-1.5 transition-colors ${activeTab === 'insights' ? 'bg-gray-200 text-gray-900 font-semibold' : 'text-gray-700 hover:bg-gray-100'}`}
           >
             Insights
           </button>
@@ -198,7 +198,7 @@ export default function JobTrackerPage() {
       {activeTab === 'list' && (
         <div className="space-y-3">
           {jobs.length === 0 && (
-            <div className="text-center py-16 text-gray-400 text-sm">
+            <div className="text-center py-16 text-gray-500 text-sm">
               No postings yet. Add one above to get started.
             </div>
           )}
