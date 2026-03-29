@@ -20,6 +20,7 @@ model JobPosting {
   location  String?
   postedAt  DateTime?
   addedAt   DateTime @default(now())
+  url       String?
   notes     String?
 
   @@map("job_postings")
