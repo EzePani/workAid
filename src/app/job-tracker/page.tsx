@@ -189,9 +189,6 @@ export default function JobTrackerPage() {
 
   const hardSkillsData = buildFreqData(jobs.flatMap(j => j.skills))
   const softSkillsData = buildFreqData(jobs.flatMap(j => j.softSkills ?? []))
-  const modalityData = Object.entries(
-    jobs.reduce((acc: Record<string, number>, j) => { const k = j.modality || 'Unknown'; acc[k] = (acc[k] || 0) + 1; return acc }, {})
-  ).map(([name, count]) => ({ name, count }))
   const levelData = Object.entries(
     jobs.reduce((acc: Record<string, number>, j) => { const k = j.level || 'Unknown'; acc[k] = (acc[k] || 0) + 1; return acc }, {})
   ).map(([name, count]) => ({ name, count }))
@@ -323,38 +320,29 @@ export default function JobTrackerPage() {
           )}
           {jobs.length >= 2 && (
             <>
-              <SkillsChart title="Most Requested Hard Skills" data={hardSkillsData} colors={HARD_COLORS} />
-              <SkillsChart title="Most Requested Soft Skills" data={softSkillsData} colors={SOFT_COLORS} />
-
+              {/* Hard + Soft side by side */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="bg-white border border-gray-200 rounded-xl p-5">
-                  <h3 className="text-sm font-semibold text-gray-800 mb-4">Work Modality</h3>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <BarChart data={modalityData}>
-                      <XAxis dataKey="name" tick={{ fontSize: 11 }} />
-                      <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
-                      <Tooltip />
-                      <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                        {modalityData.map((_, i) => <Cell key={i} fill={HARD_COLORS[i % HARD_COLORS.length]} />)}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
+                <SkillsChart title="Hard Skills" data={hardSkillsData} colors={HARD_COLORS} />
+                <SkillsChart title="Soft Skills" data={softSkillsData} colors={SOFT_COLORS} />
+              </div>
 
+              {/* Seniority — full width, cross all categories */}
+              {levelData.length > 0 && (
                 <div className="bg-white border border-gray-200 rounded-xl p-5">
-                  <h3 className="text-sm font-semibold text-gray-800 mb-4">Seniority Level</h3>
+                  <h3 className="text-sm font-semibold text-gray-800 mb-1">Seniority Level</h3>
+                  <p className="text-xs text-gray-500 mb-4">Across all categories</p>
                   <ResponsiveContainer width="100%" height={200}>
                     <BarChart data={levelData}>
-                      <XAxis dataKey="name" tick={{ fontSize: 11 }} />
+                      <XAxis dataKey="name" tick={{ fontSize: 12 }} />
                       <YAxis tick={{ fontSize: 11 }} allowDecimals={false} />
                       <Tooltip />
                       <Bar dataKey="count" radius={[4, 4, 0, 0]}>
-                        {levelData.map((_, i) => <Cell key={i} fill={SOFT_COLORS[i % SOFT_COLORS.length]} />)}
+                        {levelData.map((_, i) => <Cell key={i} fill={HARD_COLORS[i % HARD_COLORS.length]} />)}
                       </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-              </div>
+              )}
             </>
           )}
         </div>
