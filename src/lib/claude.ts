@@ -66,6 +66,7 @@ export async function parseJobPosting(rawText: string): Promise<{
   role: string
   category: string
   skills: string[]
+  softSkills: string[]
   level: string | null
   modality: string | null
   salary: string | null
@@ -73,19 +74,29 @@ export async function parseJobPosting(rawText: string): Promise<{
   postedAt: string | null
 }> {
   const completion = await groq.chat.completions.create({
-    model: 'llama-3.1-8b-instant',
+    model: 'llama-3.3-70b-versatile',
     max_tokens: 1024,
     messages: [
       {
         role: 'user',
         content: `Extract structured information from this job posting. Return ONLY valid JSON, no markdown, no explanation.
 
+IMPORTANT RULES for skills extraction:
+- Always write skill names in ENGLISH regardless of the job posting language
+- Normalize synonyms into one canonical term (e.g. "Gestión de producto" → "Product Management", "SQL / MySQL / PostgreSQL" → "SQL", "Scrum / Agile / SAFe" → "Agile")
+- Be broad, not granular — group related tools under one concept when appropriate
+- "hardSkills": technical tools, technologies, domain knowledge, methodologies (e.g. SQL, Python, Agile, Product Roadmap, Data Analysis, A/B Testing, Figma)
+- "softSkills": interpersonal and behavioral skills (e.g. Leadership, Communication, Stakeholder Management, Problem Solving, Teamwork)
+- Max 10 items per category, only the most relevant ones
+- Do NOT include the job title or seniority level as a skill
+
 JSON schema:
 {
   "company": "company name or null",
-  "role": "job title (required)",
-  "category": "general job category (e.g. 'Product Manager', 'Software Engineer', 'Data Scientist')",
-  "skills": ["array", "of", "required", "skills"],
+  "role": "job title in English",
+  "category": "broad job category in English (e.g. 'Product Manager', 'Software Engineer', 'Data Scientist')",
+  "hardSkills": ["Technical skill 1", "Technical skill 2"],
+  "softSkills": ["Soft skill 1", "Soft skill 2"],
   "level": "Junior | Mid | Senior | Lead | null",
   "modality": "Remote | Hybrid | On-site | null",
   "salary": "salary range as string or null",
@@ -101,5 +112,11 @@ ${rawText}`,
 
   const text = completion.choices[0].message.content ?? '{}'
   const cleaned = text.replace(/```json\n?|\n?```/g, '').trim()
-  return JSON.parse(cleaned)
+  const parsed = JSON.parse(cleaned)
+
+  return {
+    ...parsed,
+    skills: parsed.hardSkills ?? parsed.skills ?? [],
+    softSkills: parsed.softSkills ?? [],
+  }
 }

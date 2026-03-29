@@ -13,7 +13,8 @@ model JobPosting {
   company   String?
   role      String
   category  String
-  skills    String[]
+  skills      String[]
+  softSkills  String[]
   level     String?
   modality  String?
   salary    String?

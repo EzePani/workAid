@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
         role: extracted.role,
         category: category || extracted.category,
         skills: extracted.skills,
+        softSkills: extracted.softSkills,
         level: extracted.level,
         modality: extracted.modality,
         salary: extracted.salary,
