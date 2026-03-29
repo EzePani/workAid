@@ -141,6 +141,7 @@ export default function JobTrackerPage() {
   const [adding, setAdding] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [inputMode, setInputMode] = useState<'text' | 'url'>('text')
+  const [urlError, setUrlError] = useState<{ message: string; hint: string } | null>(null)
   const [activeTab, setActiveTab] = useState<'list' | 'insights'>('list')
   const [selectedJob, setSelectedJob] = useState<JobPosting | null>(null)
 
@@ -175,16 +176,18 @@ export default function JobTrackerPage() {
     e.preventDefault()
     if (!urlInput) return
     setAdding(true)
+    setUrlError(null)
     try {
       const res = await fetch('/api/jobs/scrape', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: urlInput, category: newCategory || undefined }),
       })
-      if (res.ok) { setUrlInput(''); setNewCategory(''); setShowForm(false); fetchJobs() }
-      else {
+      if (res.ok) {
+        setUrlInput(''); setNewCategory(''); setShowForm(false); setUrlError(null); fetchJobs()
+      } else {
         const data = await res.json()
-        alert(data.error || 'Failed to import from URL')
+        setUrlError({ message: data.message || 'Failed to import.', hint: data.hint || '' })
       }
     } finally { setAdding(false) }
   }
@@ -291,12 +294,28 @@ export default function JobTrackerPage() {
                 <input
                   type="url"
                   value={urlInput}
-                  onChange={e => setUrlInput(e.target.value)}
-                  placeholder="https://www.linkedin.com/jobs/view/..."
+                  onChange={e => { setUrlInput(e.target.value); setUrlError(null) }}
+                  placeholder="https://www.indeed.com/viewjob?jk=..."
                   className="w-full border border-gray-400 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
-                <p className="text-xs text-gray-500 mt-1">Works with LinkedIn, Indeed, Glassdoor and most public job boards. LinkedIn jobs must be public (not require login).</p>
+                <p className="text-xs text-gray-500 mt-1">Works with Indeed, Glassdoor and most public job boards.</p>
               </div>
+
+              {/* Error block */}
+              {urlError && (
+                <div className="bg-amber-50 border border-amber-300 rounded-lg p-3 space-y-1">
+                  <p className="text-sm font-medium text-amber-800">{urlError.message}</p>
+                  {urlError.hint && <p className="text-xs text-amber-700">{urlError.hint}</p>}
+                  <button
+                    type="button"
+                    onClick={() => { setInputMode('text'); setUrlError(null) }}
+                    className="text-xs font-semibold text-blue-600 hover:underline mt-1"
+                  >
+                    Switch to Paste text →
+                  </button>
+                </div>
+              )}
+
               <div className="flex gap-3">
                 <input
                   type="text"

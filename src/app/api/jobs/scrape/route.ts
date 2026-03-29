@@ -10,6 +10,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'url is required' }, { status: 400 })
     }
 
+    const isLinkedIn = url.includes('linkedin.com')
+    if (isLinkedIn) {
+      return NextResponse.json({
+        error: 'LINKEDIN_BLOCKED',
+        message: 'LinkedIn requires login to access job postings — automated import is not possible.',
+        hint: 'Open the job on LinkedIn, select all the text (Cmd+A), copy it and paste it using "Paste text" mode.',
+      }, { status: 422 })
+    }
+
     // Jina.ai Reader: converts any URL to clean text for free
     const jinaUrl = `https://r.jina.ai/${url}`
     const res = await fetch(jinaUrl, {
@@ -17,13 +26,21 @@ export async function POST(req: NextRequest) {
     })
 
     if (!res.ok) {
-      return NextResponse.json({ error: 'Could not fetch the URL. Make sure it is public.' }, { status: 422 })
+      return NextResponse.json({
+        error: 'FETCH_FAILED',
+        message: 'Could not fetch the URL.',
+        hint: 'Make sure the page is public and does not require login. Try copying the text manually instead.',
+      }, { status: 422 })
     }
 
     const rawText = await res.text()
 
     if (rawText.length < 100) {
-      return NextResponse.json({ error: 'Page content too short. The URL may require login.' }, { status: 422 })
+      return NextResponse.json({
+        error: 'CONTENT_TOO_SHORT',
+        message: 'The page content is too short or empty.',
+        hint: 'This URL may require login. Try copying the job description text and use "Paste text" mode instead.',
+      }, { status: 422 })
     }
 
     const extracted = await parseJobPosting(rawText)
