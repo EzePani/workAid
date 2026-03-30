@@ -212,13 +212,13 @@ export async function generateCVPdf(cvText: string): Promise<Uint8Array> {
     if (section === 'experience') {
       if (line.startsWith('[TITLE]')) {
         if (prevWasEntry) y -= ENTRY_GAP
-        const parts = line.replace('[TITLE]', '').trim().split('|').map(s => s.trim())
+        const parts = line.replace(/\[TITLE\]\s*/g, '').trim().split('|').map(s => s.trim())
         drawTwoCol(parts[0] ?? '', bold, parts[1] ?? '', italic, BODY_SIZE)
         prevWasEntry = false
         continue
       }
       if (line.startsWith('[META]')) {
-        const parts = line.replace('[META]', '').trim().split('|').map(s => s.trim())
+        const parts = line.replace(/\[META\]\s*/g, '').trim().split('|').map(s => s.trim())
         drawTwoCol(parts[0] ?? '', italic, parts[1] ?? '', italic, BODY_SIZE)
         y -= 1
         prevWasEntry = false
