@@ -9,7 +9,7 @@ vi.mock('groq-sdk', () => ({
   })),
 }))
 
-import { parseJobPosting, optimizeCV } from '@/lib/claude'
+import { parseJobPosting, optimizeCV, analyzeCV } from '@/lib/claude'
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function groqResponse(content: string) {
@@ -120,5 +120,79 @@ describe('optimizeCV', () => {
     const prompt = callArg.messages[0].content
     expect(prompt).toContain(cvText)
     expect(prompt).toContain(jobDesc)
+  })
+
+  it('includes gap analysis context in the prompt when analysis is provided', async () => {
+    mockCreate.mockResolvedValue(groqResponse('optimized cv'))
+    const analysis = { missingSkills: ['SQL', 'Python'], suggestions: ['Add SQL experience'] }
+    await optimizeCV('CV text', 'Job desc', analysis)
+    const prompt = mockCreate.mock.calls[0][0].messages[0].content
+    expect(prompt).toContain('SQL')
+    expect(prompt).toContain('Python')
+    expect(prompt).toContain('Add SQL experience')
+  })
+
+  it('does not include gap context section when analysis is not provided', async () => {
+    mockCreate.mockResolvedValue(groqResponse('optimized cv'))
+    await optimizeCV('CV text', 'Job desc')
+    const prompt = mockCreate.mock.calls[0][0].messages[0].content
+    expect(prompt).not.toContain('GAP ANALYSIS')
+  })
+})
+
+// ── analyzeCV ────────────────────────────────────────────────────────────────
+describe('analyzeCV', () => {
+  beforeEach(() => mockCreate.mockReset())
+
+  const VALID_ANALYSIS = {
+    overallFit:     'medium',
+    matchingSkills: ['TypeScript', 'React', 'Agile'],
+    missingSkills:  ['SQL', 'Python'],
+    suggestions:    ['Add SQL experience', 'Highlight data analysis work'],
+  }
+
+  it('returns structured analysis from a valid Groq response', async () => {
+    mockCreate.mockResolvedValue(groqResponse(JSON.stringify(VALID_ANALYSIS)))
+    const result = await analyzeCV('My CV text', 'Job description requiring SQL')
+    expect(result.overallFit).toBe('medium')
+    expect(result.matchingSkills).toContain('TypeScript')
+    expect(result.missingSkills).toContain('SQL')
+    expect(result.suggestions).toHaveLength(2)
+  })
+
+  it('strips markdown code fences from the response', async () => {
+    const wrapped = '```json\n' + JSON.stringify(VALID_ANALYSIS) + '\n```'
+    mockCreate.mockResolvedValue(groqResponse(wrapped))
+    const result = await analyzeCV('CV text', 'Job desc')
+    expect(result.overallFit).toBe('medium')
+  })
+
+  it('falls back to "medium" overallFit when missing from response', async () => {
+    const noFit = { ...VALID_ANALYSIS, overallFit: undefined }
+    mockCreate.mockResolvedValue(groqResponse(JSON.stringify(noFit)))
+    const result = await analyzeCV('CV text', 'Job desc')
+    expect(result.overallFit).toBe('medium')
+  })
+
+  it('falls back to empty arrays when skill lists are missing', async () => {
+    const empty = { overallFit: 'low', matchingSkills: undefined, missingSkills: undefined, suggestions: undefined }
+    mockCreate.mockResolvedValue(groqResponse(JSON.stringify(empty)))
+    const result = await analyzeCV('CV text', 'Job desc')
+    expect(result.matchingSkills).toEqual([])
+    expect(result.missingSkills).toEqual([])
+    expect(result.suggestions).toEqual([])
+  })
+
+  it('includes both CV text and job description in the prompt', async () => {
+    mockCreate.mockResolvedValue(groqResponse(JSON.stringify(VALID_ANALYSIS)))
+    await analyzeCV('My unique CV content', 'This specific job posting')
+    const prompt = mockCreate.mock.calls[0][0].messages[0].content
+    expect(prompt).toContain('My unique CV content')
+    expect(prompt).toContain('This specific job posting')
+  })
+
+  it('throws when Groq returns invalid JSON', async () => {
+    mockCreate.mockResolvedValue(groqResponse('not valid json at all'))
+    await expect(analyzeCV('CV text', 'Job desc')).rejects.toThrow()
   })
 })
