@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import {
   Upload, FileText, Loader2, Download, CheckCircle,
   ChevronDown, Copy, AlertCircle, TrendingUp, TrendingDown,
-  Minus, X, ArrowLeft,
+  Minus, X, ArrowLeft, ScanSearch, Sparkles,
 } from 'lucide-react'
 
 const MIN_TEXT_LENGTH = 80
@@ -209,11 +209,39 @@ export default function CVOptimizerPage() {
 
   return (
     <div className="max-w-2xl mx-auto">
+      {/* Page header */}
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-gray-900">CV Optimizer</h1>
-        <p className="text-gray-600 mt-1 text-sm">
-          Upload your CV and a job description — we&apos;ll analyze the match, then generate an ATS-optimized PDF.
+        <div className="flex items-center gap-2 mb-1">
+          <div className="w-7 h-7 bg-blue-600 rounded-lg flex items-center justify-center shrink-0">
+            <Sparkles className="w-4 h-4 text-white" />
+          </div>
+          <h1 className="text-2xl font-bold text-gray-900">CV Optimizer</h1>
+        </div>
+        <p className="text-gray-500 text-sm mt-2 leading-relaxed">
+          Upload your CV and paste a job description. We&apos;ll analyze how well you match the role,
+          show you exactly what&apos;s missing, then generate a tailored ATS-optimized PDF — without
+          inventing anything.
         </p>
+
+        {/* Steps */}
+        <div className="flex items-center gap-2 mt-4">
+          {[
+            { icon: Upload,     label: 'Upload CV'   },
+            { icon: ScanSearch, label: 'Analyze match' },
+            { icon: Sparkles,   label: 'Generate PDF'  },
+            { icon: Download,   label: 'Download'      },
+          ].map(({ icon: Icon, label }, i, arr) => (
+            <div key={label} className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                <Icon className="w-3.5 h-3.5 text-blue-500" />
+                <span>{label}</span>
+              </div>
+              {i < arr.length - 1 && (
+                <span className="text-gray-300 text-xs">→</span>
+              )}
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* ── Step 1: Input ───────────────────────────────────────── */}

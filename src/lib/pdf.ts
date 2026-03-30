@@ -1,127 +1,28 @@
-import { PDFDocument, rgb, StandardFonts } from 'pdf-lib'
+import { PDFDocument, rgb, StandardFonts, PDFFont } from 'pdf-lib'
 
-const MARGIN = 50
-const PAGE_WIDTH = 595
-const CONTENT_WIDTH = PAGE_WIDTH - MARGIN * 2
-const LINE_HEIGHT = 14
+// ── Layout constants ──────────────────────────────────────────────────────────
+const MARGIN       = 50
+const PAGE_WIDTH   = 595   // A4
+const PAGE_HEIGHT  = 841   // A4
+const CONTENT_W    = PAGE_WIDTH - MARGIN * 2
+const BODY_SIZE    = 9
+const NAME_SIZE    = 18
+const SUB_SIZE     = 9
+const BODY_LH      = 13   // line height for body text
+const SECTION_GAP  = 6    // extra space before section header
+const ENTRY_GAP    = 5    // space between experience entries
+const GRAY         = rgb(0.35, 0.35, 0.35)
+const BLACK        = rgb(0, 0, 0)
+const DARK         = rgb(0.15, 0.15, 0.15)
 
-interface TextOptions {
-  size?: number
-  bold?: boolean
-  color?: [number, number, number]
-}
-
-export async function generateCVPdf(cvText: string, candidateName: string): Promise<Uint8Array> {
-  const pdfDoc = await PDFDocument.create()
-  const page = pdfDoc.addPage([PAGE_WIDTH, 841]) // A4
-
-  const regularFont = await pdfDoc.embedFont(StandardFonts.Helvetica)
-  const boldFont = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
-
-  let y = 841 - MARGIN
-
-  const drawText = (text: string, x: number, opts: TextOptions = {}) => {
-    const { size = 10, bold = false, color = [0, 0, 0] } = opts
-    const font = bold ? boldFont : regularFont
-    page.drawText(text, {
-      x,
-      y,
-      size,
-      font,
-      color: rgb(color[0], color[1], color[2]),
-      maxWidth: CONTENT_WIDTH,
-    })
-    y -= LINE_HEIGHT
-  }
-
-  const drawLine = () => {
-    page.drawLine({
-      start: { x: MARGIN, y: y + 4 },
-      end: { x: PAGE_WIDTH - MARGIN, y: y + 4 },
-      thickness: 0.5,
-      color: rgb(0.6, 0.6, 0.6),
-    })
-    y -= 6
-  }
-
-  const drawSectionHeader = (title: string) => {
-    y -= 4
-    drawText(title.toUpperCase(), MARGIN, { size: 9, bold: true, color: [0.2, 0.2, 0.2] })
-    drawLine()
-  }
-
-  // Parse CV text into sections
-  const lines = cvText.split('\n').map(l => l.trim()).filter(Boolean)
-
-  let currentSection = 'header'
-
-  for (const line of lines) {
-    if (y < 60) break // Safety margin
-
-    const isHeader = line === candidateName || line === candidateName.toUpperCase()
-    const isSectionTitle = /^(PROFESSIONAL SUMMARY|EXPERIENCE|EDUCATION|SKILLS|CERTIFICATIONS|LANGUAGES|PROJECTS)/i.test(line)
-    const isBullet = line.startsWith('•') || line.startsWith('-')
-    const isSeparator = line.startsWith('---')
-
-    if (isSeparator) continue
-
-    if (isHeader) {
-      drawText(line, MARGIN, { size: 16, bold: true })
-      y -= 2
-      continue
-    }
-
-    if (isSectionTitle) {
-      currentSection = line.toUpperCase()
-      drawSectionHeader(line)
-      continue
-    }
-
-    if (isBullet) {
-      const bulletText = line.replace(/^[•\-]\s*/, '')
-      const wrapped = wrapText(bulletText, regularFont, 9, CONTENT_WIDTH - 12)
-      for (let i = 0; i < wrapped.length; i++) {
-        if (i === 0) {
-          page.drawText('•', { x: MARGIN + 2, y, size: 9, font: regularFont, color: rgb(0, 0, 0) })
-          drawText(wrapped[i], MARGIN + 12, { size: 9 })
-        } else {
-          drawText(wrapped[i], MARGIN + 12, { size: 9 })
-        }
-      }
-      continue
-    }
-
-    // Contact line (email, phone, linkedin)
-    if (currentSection === 'header' && (line.includes('@') || line.includes('|') || line.includes('linkedin'))) {
-      drawText(line, MARGIN, { size: 9, color: [0.3, 0.3, 0.3] })
-      continue
-    }
-
-    // Job title line (Company | Dates)
-    if (line.includes('|') && currentSection === 'EXPERIENCE') {
-      drawText(line, MARGIN, { size: 9, bold: true })
-      continue
-    }
-
-    // Default
-    const wrapped = wrapText(line, regularFont, 9, CONTENT_WIDTH)
-    for (const wl of wrapped) {
-      drawText(wl, MARGIN, { size: 9 })
-    }
-  }
-
-  return pdfDoc.save()
-}
-
-function wrapText(text: string, font: import('pdf-lib').PDFFont, size: number, maxWidth: number): string[] {
+// ── Helpers ───────────────────────────────────────────────────────────────────
+function wrapText(text: string, font: PDFFont, size: number, maxWidth: number): string[] {
   const words = text.split(' ')
   const lines: string[] = []
   let current = ''
-
   for (const word of words) {
     const test = current ? `${current} ${word}` : word
-    const width = font.widthOfTextAtSize(test, size)
-    if (width > maxWidth && current) {
+    if (font.widthOfTextAtSize(test, size) > maxWidth && current) {
       lines.push(current)
       current = word
     } else {
@@ -129,5 +30,230 @@ function wrapText(text: string, font: import('pdf-lib').PDFFont, size: number, m
     }
   }
   if (current) lines.push(current)
-  return lines
+  return lines.length ? lines : ['']
+}
+
+function textWidth(text: string, font: PDFFont, size: number): number {
+  return font.widthOfTextAtSize(text, size)
+}
+
+// ── PDF generator ─────────────────────────────────────────────────────────────
+export async function generateCVPdf(cvText: string): Promise<Uint8Array> {
+  const pdfDoc = await PDFDocument.create()
+  const page   = pdfDoc.addPage([PAGE_WIDTH, PAGE_HEIGHT])
+
+  const regular = await pdfDoc.embedFont(StandardFonts.Helvetica)
+  const bold    = await pdfDoc.embedFont(StandardFonts.HelveticaBold)
+  const italic  = await pdfDoc.embedFont(StandardFonts.HelveticaOblique)
+
+  let y = PAGE_HEIGHT - MARGIN
+
+  // ── Drawing primitives ──────────────────────────────────────────────────────
+  const draw = (text: string, x: number, font: PDFFont, size: number, color = BLACK) => {
+    page.drawText(text, { x, y, size, font, color })
+    y -= BODY_LH
+  }
+
+  const drawNoAdvance = (text: string, x: number, font: PDFFont, size: number, color = BLACK) => {
+    page.drawText(text, { x, y, size, font, color })
+  }
+
+  const drawLine = () => {
+    page.drawLine({
+      start: { x: MARGIN, y: y + 4 },
+      end:   { x: PAGE_WIDTH - MARGIN, y: y + 4 },
+      thickness: 0.5,
+      color: rgb(0.6, 0.6, 0.6),
+    })
+    y -= 5
+  }
+
+  const drawCentered = (text: string, font: PDFFont, size: number, color = BLACK) => {
+    const w = textWidth(text, font, size)
+    const x = MARGIN + (CONTENT_W - w) / 2
+    page.drawText(text, { x, y, size, font, color })
+    y -= BODY_LH
+  }
+
+  const drawSectionHeader = (title: string) => {
+    y -= SECTION_GAP
+    draw(title.toUpperCase(), MARGIN, bold, BODY_SIZE, DARK)
+    drawLine()
+  }
+
+  // Two-column row: left text (fontL) + right text (fontR), both on same y
+  const drawTwoCol = (
+    left: string, fontL: PDFFont,
+    right: string, fontR: PDFFont,
+    size: number,
+  ) => {
+    const rw = textWidth(right, fontR, size)
+    drawNoAdvance(left, MARGIN, fontL, size, BLACK)
+    drawNoAdvance(right, PAGE_WIDTH - MARGIN - rw, fontR, size, DARK)
+    y -= BODY_LH
+  }
+
+  // Skills line: "Category::" in bold + rest in regular, with wrapping
+  const drawSkillLine = (line: string) => {
+    const sep = line.indexOf('::')
+    if (sep === -1) {
+      const wrapped = wrapText(line, regular, BODY_SIZE, CONTENT_W)
+      for (const l of wrapped) draw(l, MARGIN, regular, BODY_SIZE)
+      y -= 2  // extra gap between skill lines
+      return
+    }
+    const prefix  = line.slice(0, sep + 2)          // "Category::"
+    const rawRest = line.slice(sep + 2).trimStart()  // "skill1, skill2"
+    const gap     = ' '                              // one space after ::
+    const pw      = textWidth(prefix + gap, bold, BODY_SIZE)
+    drawNoAdvance(prefix, MARGIN, bold, BODY_SIZE)
+    const maxRest = CONTENT_W - pw
+    const wrapped = wrapText(rawRest, regular, BODY_SIZE, maxRest)
+    for (let i = 0; i < wrapped.length; i++) {
+      if (i === 0) {
+        page.drawText(wrapped[i], { x: MARGIN + pw, y, size: BODY_SIZE, font: regular, color: BLACK })
+        y -= BODY_LH
+      } else {
+        draw(wrapped[i], MARGIN + pw, regular, BODY_SIZE)
+      }
+    }
+    y -= 2  // extra gap between skill lines
+  }
+
+  // Bullet with hanging indent
+  const drawBullet = (text: string) => {
+    const indent = 14
+    const maxW   = CONTENT_W - indent
+    const wrapped = wrapText(text, regular, BODY_SIZE, maxW)
+    for (let i = 0; i < wrapped.length; i++) {
+      if (i === 0) {
+        drawNoAdvance('•', MARGIN + 2, regular, BODY_SIZE, DARK)
+        page.drawText(wrapped[i], { x: MARGIN + indent, y, size: BODY_SIZE, font: regular, color: BLACK })
+        y -= BODY_LH
+      } else {
+        draw(wrapped[i], MARGIN + indent, regular, BODY_SIZE)
+      }
+    }
+  }
+
+  // ── Pre-process: normalise markdown formatting to [TITLE]/[META] markers ────
+  // The LLM sometimes outputs **bold** or _italic_ instead of our markers.
+  function normalizeLine(l: string): string {
+    // **Job Title** | Location  →  [TITLE] Job Title | Location
+    if (/^\*\*[^*]+\*\*/.test(l) && !l.startsWith('[TITLE]')) {
+      return '[TITLE] ' + l.replace(/\*\*/g, '').trim()
+    }
+    // _Company | Dates_  →  [META] Company | Dates
+    if (/^_[^_]+_$/.test(l) && !l.startsWith('[META]')) {
+      return '[META] ' + l.replace(/^_|_$/g, '').trim()
+    }
+    // Strip any residual ** or _ used inline
+    return l.replace(/\*\*/g, '').replace(/(?<!\w)_([^_]+)_(?!\w)/g, '$1')
+  }
+
+  // ── Parse and render ────────────────────────────────────────────────────────
+  const rawLines = cvText
+    .split('\n')
+    .map(l => normalizeLine(l.trim()))
+    .filter(l => l.length > 0)
+
+  type Section = 'header' | 'profile' | 'experience' | 'skills' | 'languages' | 'other'
+  let section: Section = 'header'
+  let headerLineIdx = 0   // 0=name, 1=location, 2=contact
+  let prevWasEntry = false // track spacing between experience entries
+
+  for (const line of rawLines) {
+    if (y < 60) break  // safety floor
+
+    // Strip --- separators
+    if (/^-{3,}$/.test(line)) continue
+
+    // ── Section detection ─────────────────────────────────────────────────────
+    const sectionMatch = /^(PROFILE|PROFESSIONAL EXPERIENCE|EXPERIENCE|SKILLS|LANGUAGES|EDUCATION|CERTIFICATIONS|PROJECTS)$/i.test(line)
+    if (sectionMatch) {
+      prevWasEntry = false
+      const key = line.toUpperCase()
+      if (key.includes('EXPERIENCE'))        section = 'experience'
+      else if (key === 'PROFILE')            section = 'profile'
+      else if (key === 'SKILLS')             section = 'skills'
+      else if (key === 'LANGUAGES')          section = 'languages'
+      else                                   section = 'other'
+      drawSectionHeader(line)
+      continue
+    }
+
+    // ── Header block (name + location + contact) ──────────────────────────────
+    if (section === 'header') {
+      if (headerLineIdx === 0) {
+        // Name
+        y -= 4
+        drawCentered(line, bold, NAME_SIZE)
+        y -= 2
+      } else if (headerLineIdx === 1) {
+        // Location
+        drawCentered(line, regular, SUB_SIZE, GRAY)
+      } else {
+        // Contact
+        drawCentered(line, regular, SUB_SIZE, GRAY)
+        y -= 4
+      }
+      headerLineIdx++
+      continue
+    }
+
+    // ── Profile ───────────────────────────────────────────────────────────────
+    if (section === 'profile') {
+      const wrapped = wrapText(line, regular, BODY_SIZE, CONTENT_W)
+      for (const l of wrapped) draw(l, MARGIN, regular, BODY_SIZE)
+      continue
+    }
+
+    // ── Experience ────────────────────────────────────────────────────────────
+    if (section === 'experience') {
+      if (line.startsWith('[TITLE]')) {
+        if (prevWasEntry) y -= ENTRY_GAP
+        const parts = line.replace(/\[TITLE\]\s*/g, '').trim().split('|').map(s => s.trim())
+        drawTwoCol(parts[0] ?? '', bold, parts[1] ?? '', italic, BODY_SIZE)
+        prevWasEntry = false
+        continue
+      }
+      if (line.startsWith('[META]')) {
+        const parts = line.replace(/\[META\]\s*/g, '').trim().split('|').map(s => s.trim())
+        drawTwoCol(parts[0] ?? '', italic, parts[1] ?? '', italic, BODY_SIZE)
+        y -= 1
+        prevWasEntry = false
+        continue
+      }
+      if (line.startsWith('•') || line.startsWith('-')) {
+        drawBullet(line.replace(/^[•\-]\s*/, ''))
+        prevWasEntry = true
+        continue
+      }
+      // fallback plain text in experience
+      const wrapped = wrapText(line, regular, BODY_SIZE, CONTENT_W)
+      for (const l of wrapped) draw(l, MARGIN, regular, BODY_SIZE)
+      continue
+    }
+
+    // ── Skills ────────────────────────────────────────────────────────────────
+    if (section === 'skills') {
+      drawSkillLine(line)
+      y -= 1
+      continue
+    }
+
+    // ── Languages / Other ─────────────────────────────────────────────────────
+    const wrapped = wrapText(line, regular, BODY_SIZE, CONTENT_W)
+    for (const l of wrapped) draw(l, MARGIN, regular, BODY_SIZE)
+  }
+
+  // Footer: last updated + name
+  const footerY = 28
+  const footerLeft  = 'Last updated: ' + new Date().toISOString().slice(0, 10)
+  const footerRight = rawLines[0] ?? ''
+  page.drawText(footerLeft,  { x: MARGIN, y: footerY, size: 7, font: italic, color: rgb(0.6, 0.6, 0.6) })
+  const rw = textWidth(footerRight, italic, 7)
+  page.drawText(footerRight, { x: PAGE_WIDTH - MARGIN - rw, y: footerY, size: 7, font: italic, color: rgb(0.6, 0.6, 0.6) })
+
+  return pdfDoc.save()
 }

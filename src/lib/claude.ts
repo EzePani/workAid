@@ -26,39 +26,52 @@ If any of these gaps can be addressed by reframing existing experience, do so. N
         role: 'user',
         content: `You are an expert CV writer and ATS optimization specialist.
 
-Your task is to rewrite the provided CV to perfectly match the job description, following these strict rules:
+Your task is to rewrite the provided CV to perfectly match the job description.
 
-RULES:
-1. NEVER invent, fabricate, or exaggerate any experience, skill, or achievement
-2. Only use information present in the original CV
-3. Rewrite and reframe existing experience using keywords from the job description
-4. Follow Harvard CV format strictly
-5. Output must fit ONE PAGE (max ~600 words of content)
-6. No photo, no personal photo, no profile picture references
-7. Use strong ATS-friendly keywords from the job description naturally
-8. Use clean, simple formatting — no tables, no columns, no graphics
-9. Quantify achievements where they already exist in the original CV
-10. Start with a concise 2-3 line professional summary tailored to this role
+STRICT RULES — violating any of these is unacceptable:
+1. NEVER invent, fabricate, or exaggerate any experience, skill, achievement, or date
+2. NEVER add a section that does not exist in the original CV (e.g. if there is no Education section, do not include one)
+3. Only use information present in the original CV — reframe and reword, never invent
+4. Use ATS-friendly keywords from the job description naturally within existing experience
+5. Output must fit ONE PAGE (max ~550 words of body content)
+6. No photos, no references, no "References available upon request"
+7. Quantify achievements only if numbers already exist in the original CV
 ${gapContext}
-FORMAT (follow this exact structure):
----
-EZEQUIEL PANIGAZZI
-[City, Country] | [email] | [phone] | [LinkedIn if present]
+OUTPUT FORMAT — follow this structure exactly, using these exact markers:
 
-PROFESSIONAL SUMMARY
-[2-3 lines tailored to this specific role]
+[FULL NAME IN CAPS]
+[City, Country]
+[LinkedIn] | [GitHub] | [email]
 
-EXPERIENCE
-[Job Title] | [Company] | [Dates]
-• [Achievement bullet using job description keywords]
-• [Achievement bullet]
+PROFILE
+[2–3 sentence summary tailored to this role, using keywords from job description]
 
-EDUCATION
-[Degree] | [Institution] | [Year]
+PROFESSIONAL EXPERIENCE
+[TITLE] Job Title | Location
+[META] Company – Product or Team | Start Year – End Year
+• Achievement bullet rewritten with job description keywords
+• Achievement bullet
+
+[TITLE] Job Title | Location
+[META] Company | Start Year – End Year
+• Achievement bullet
+• Achievement bullet
 
 SKILLS
-[Comma-separated list of relevant skills from both CV and job description]
----
+[Category]:: skill1, skill2, skill3
+[Category]:: skill1, skill2
+
+LANGUAGES
+Language1 (Level) · Language2 (Level)
+
+MARKER RULES:
+- Use [TITLE] prefix for the job title line (bold, with location on the right separated by |)
+- Use [META] prefix for the company/dates line (italic, with dates on the right separated by |)
+- Bullets start with •
+- Skills use Category:: format (e.g. "Engineering:: JavaScript, TypeScript, React")
+- Only include sections present in the original CV
+- Do NOT include EDUCATION unless the original CV has an Education section
+- Do NOT include section separators like ---
 
 ORIGINAL CV:
 ${cvText}
@@ -66,7 +79,7 @@ ${cvText}
 JOB DESCRIPTION:
 ${jobDescription}
 
-Return ONLY the rewritten CV text, no explanations, no commentary.`,
+Return ONLY the formatted CV text. No explanations, no comments, no markdown.`,
       },
     ],
   })
