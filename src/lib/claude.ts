@@ -4,7 +4,20 @@ const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 })
 
-export async function optimizeCV(cvText: string, jobDescription: string): Promise<string> {
+export async function optimizeCV(
+  cvText: string,
+  jobDescription: string,
+  analysis?: { missingSkills: string[]; suggestions: string[] },
+): Promise<string> {
+  const gapContext = analysis?.missingSkills.length
+    ? `
+GAP ANALYSIS (use this to prioritize reframing):
+- Skills the job requires that are not explicit in the CV: ${analysis.missingSkills.join(', ')}
+- Key recommendations to address: ${analysis.suggestions.join(' | ')}
+If any of these gaps can be addressed by reframing existing experience, do so. Never invent experience.
+`
+    : ''
+
   const completion = await groq.chat.completions.create({
     model: 'llama-3.3-70b-versatile',
     max_tokens: 4096,
@@ -26,7 +39,7 @@ RULES:
 8. Use clean, simple formatting — no tables, no columns, no graphics
 9. Quantify achievements where they already exist in the original CV
 10. Start with a concise 2-3 line professional summary tailored to this role
-
+${gapContext}
 FORMAT (follow this exact structure):
 ---
 EZEQUIEL PANIGAZZI
@@ -59,6 +72,62 @@ Return ONLY the rewritten CV text, no explanations, no commentary.`,
   })
 
   return completion.choices[0].message.content ?? ''
+}
+
+export async function analyzeCV(cvText: string, jobDescription: string): Promise<{
+  overallFit: 'high' | 'medium' | 'low'
+  matchingSkills: string[]
+  missingSkills: string[]
+  suggestions: string[]
+}> {
+  const completion = await groq.chat.completions.create({
+    model: 'llama-3.3-70b-versatile',
+    max_tokens: 1024,
+    messages: [
+      {
+        role: 'user',
+        content: `You are a career coach analyzing how well a CV matches a job description. Return ONLY valid JSON, no markdown, no explanation.
+
+Analyze the CV against the job description and identify:
+1. Skills/requirements the job asks for that are clearly present in the CV
+2. Skills/requirements the job asks for that are missing or not evident in the CV
+3. Specific, actionable suggestions to improve the CV for this role
+4. Overall fit level
+
+Rules:
+- Write all skill names in English
+- Be specific and honest — if SQL is required but not in the CV, flag it
+- Suggestions should be concrete (e.g. "Add SQL experience if you have any" not "improve technical skills")
+- Max 8 items per list
+- overallFit: "high" if 70%+ requirements match, "medium" if 40-70%, "low" if below 40%
+
+JSON schema:
+{
+  "overallFit": "high" | "medium" | "low",
+  "matchingSkills": ["skill1", "skill2"],
+  "missingSkills": ["skill3", "skill4"],
+  "suggestions": ["Specific suggestion 1", "Specific suggestion 2"]
+}
+
+CV:
+${cvText}
+
+JOB DESCRIPTION:
+${jobDescription}`,
+      },
+    ],
+  })
+
+  const text = completion.choices[0].message.content ?? '{}'
+  const cleaned = text.replace(/```json\n?|\n?```/g, '').trim()
+  const parsed = JSON.parse(cleaned)
+
+  return {
+    overallFit: parsed.overallFit ?? 'medium',
+    matchingSkills: parsed.matchingSkills ?? [],
+    missingSkills: parsed.missingSkills ?? [],
+    suggestions: parsed.suggestions ?? [],
+  }
 }
 
 export async function parseJobPosting(rawText: string): Promise<{
