@@ -83,8 +83,6 @@ function JobDetailModal({
   const [editing, setEditing] = useState(false)
   const [saving, setSaving] = useState(false)
   const [editData, setEditData] = useState({
-    role:     job.role,
-    company:  job.company  ?? '',
     location: job.location ?? '',
     salary:   job.salary   ?? '',
     url:      job.url      ?? '',
@@ -153,46 +151,17 @@ function JobDetailModal({
         {/* Header */}
         <div className="flex items-start justify-between p-6 border-b border-gray-200">
           <div className="flex-1 min-w-0 pr-4">
-            {editing ? (
-              <div className="space-y-2">
-                <div>
-                  <label htmlFor="edit-role" className="block text-xs font-medium text-gray-700 mb-1">
-                    Role <span aria-hidden="true" className="text-red-500">*</span>
-                    <span className="sr-only">(required)</span>
-                  </label>
-                  <input
-                    id="edit-role"
-                    type="text"
-                    value={editData.role}
-                    onChange={e => setEditData(d => ({ ...d, role: e.target.value }))}
-                    aria-required="true"
-                    className="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 text-base font-bold text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-                <div>
-                  <label htmlFor="edit-company" className="block text-xs font-medium text-gray-700 mb-1">Company</label>
-                  <input
-                    id="edit-company"
-                    type="text"
-                    value={editData.company}
-                    onChange={e => setEditData(d => ({ ...d, company: e.target.value }))}
-                    className="w-full border border-gray-300 rounded-lg px-2.5 py-1.5 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-              </div>
-            ) : (
-              <>
-                <h2 className="text-lg font-bold text-gray-900">{job.role}</h2>
-                {job.company && <p className="text-sm text-gray-600 mt-0.5">{job.company}</p>}
-              </>
-            )}
+            <>
+              <h2 className="text-lg font-bold text-gray-900">{job.role}</h2>
+              {job.company && <p className="text-sm text-gray-600 mt-0.5">{job.company}</p>}
+            </>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {editing ? (
               <>
                 <button
                   onClick={handleSave}
-                  disabled={saving || !editData.role.trim()}
+                  disabled={saving}
                   className="flex items-center gap-1 text-sm bg-blue-600 text-white rounded-lg px-3 py-1.5 hover:bg-blue-700 disabled:opacity-50 transition-colors"
                   aria-label="Save changes"
                 >
