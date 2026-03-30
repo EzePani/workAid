@@ -1,36 +1,125 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# WorkAid
 
-## Getting Started
+**WorkAid** is a personal productivity tool for the modern job search. It combines two AI-powered features — a smart job tracker and an automated CV optimizer — so you can spend less time organizing and more time landing interviews.
 
-First, run the development server:
+---
+
+## What it does
+
+### Job Tracker
+Paste any job posting as raw text and WorkAid uses Claude AI to automatically extract:
+- Company, role, and category
+- Required technical and soft skills
+- Seniority level, work modality, location, and salary
+
+Jobs are stored with a status you can update through the whole pipeline: **Not Applied → Applied → Interview → Offer → Rejected**. The tracker warns you if you try to add a position you've already saved, preventing duplicates.
+
+Built-in filters let you slice your list by category, level, modality, and status in real-time. You can also free-text search across company, role, and location — no page reload needed.
+
+When you're done, export everything to CSV with one click.
+
+### CV Optimizer
+Upload your CV as a PDF and paste a job description. WorkAid extracts the CV text, feeds both to Claude AI, and returns a tailored CV as a downloadable PDF — formatted in a clean Harvard-style layout, ready to submit.
+
+---
+
+## Tech stack
+
+| Layer | Technology |
+|---|---|
+| Framework | Next.js 14 (App Router) |
+| Language | TypeScript |
+| Styling | Tailwind CSS |
+| Database | PostgreSQL + Prisma ORM |
+| AI | Claude API (via Anthropic SDK) |
+| PDF generation | PDFKit |
+| PDF parsing | pdf-parse |
+| Testing | Vitest |
+
+---
+
+## Getting started
+
+### Prerequisites
+- Node.js 18+
+- PostgreSQL database
+
+### 1. Clone and install
+
+```bash
+git clone <repo-url>
+cd workaid
+npm install
+```
+
+### 2. Configure environment variables
+
+Create a `.env` file at the project root:
+
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/workaid"
+ANTHROPIC_API_KEY="sk-ant-..."
+```
+
+### 3. Run database migrations
+
+```bash
+npx prisma migrate dev
+```
+
+### 4. Start the development server
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Running tests
 
-## Learn More
+```bash
+# Run all tests once
+npm run test:run
 
-To learn more about Next.js, take a look at the following resources:
+# Watch mode
+npm test
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+# Coverage report
+npm run test:coverage
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+52 unit tests cover all API routes and the AI parsing/optimization layer.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Project structure
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+```
+src/
+  app/
+    api/
+      cv/route.ts          # POST: CV optimization endpoint
+      jobs/route.ts         # GET + POST: list and create jobs
+      jobs/[id]/route.ts    # GET + PATCH + DELETE: single job
+      jobs/export/route.ts  # GET: export all jobs as CSV
+    cv-optimizer/           # CV Optimizer page
+    job-tracker/            # Job Tracker page
+  lib/
+    claude.ts               # AI functions (parseJobPosting, optimizeCV)
+    pdf.ts                  # PDF generation (Harvard layout)
+    prisma.ts               # Prisma client singleton
+  __tests__/
+    api/                    # API route unit tests
+    lib/                    # Library unit tests
+prisma/
+  schema.prisma             # Database schema
+  migrations/               # Migration history
+```
+
+---
+
+## API reference
+
+See [docs/API.md](docs/API.md) for full endpoint documentation including request/response shapes, error codes, and example payloads.

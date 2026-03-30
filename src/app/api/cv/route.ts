@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { optimizeCV } from '@/lib/claude'
 import { generateCVPdf } from '@/lib/pdf'
-// eslint-disable-next-line @typescript-eslint/no-require-imports
-const pdfParse = require('pdf-parse')
+import pdfParse from 'pdf-parse'
 
 export async function POST(req: NextRequest) {
   try {
