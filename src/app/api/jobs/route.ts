@@ -21,7 +21,7 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const { rawText, category } = await req.json()
+    const { rawText } = await req.json()
 
     if (!rawText) {
       return NextResponse.json({ error: 'rawText is required' }, { status: 400 })
@@ -29,12 +29,29 @@ export async function POST(req: NextRequest) {
 
     const extracted = await parseJobPosting(rawText)
 
+    // Duplicate detection: same company + role (case-insensitive)
+    if (extracted.company && extracted.role) {
+      const existing = await prisma.jobPosting.findFirst({
+        where: {
+          company: { equals: extracted.company, mode: 'insensitive' },
+          role: { equals: extracted.role, mode: 'insensitive' },
+        },
+        select: { id: true, role: true, company: true },
+      })
+      if (existing) {
+        return NextResponse.json(
+          { error: 'duplicate', role: existing.role, company: existing.company },
+          { status: 409 }
+        )
+      }
+    }
+
     const job = await prisma.jobPosting.create({
       data: {
         rawText,
         company: extracted.company,
         role: extracted.role,
-        category: category || extracted.category,
+        category: extracted.category,
         skills: extracted.skills,
         softSkills: extracted.softSkills,
         level: extracted.level,

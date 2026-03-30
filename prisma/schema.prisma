@@ -23,6 +23,7 @@ model JobPosting {
   addedAt   DateTime @default(now())
   url       String?
   notes     String?
+  status    String   @default("Not Applied")
 
   @@map("job_postings")
 }
