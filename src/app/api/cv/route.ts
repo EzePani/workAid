@@ -21,8 +21,11 @@ export async function POST(req: NextRequest) {
     const parsedPdf = await pdfParse(cvBuffer)
     const cvText = parsedPdf.text
 
+    const analysisStr = formData.get('analysis') as string | null
+    const analysis = analysisStr ? JSON.parse(analysisStr) : undefined
+
     const [optimizedCV, extracted] = await Promise.all([
-      optimizeCV(cvText, jobDescription),
+      optimizeCV(cvText, jobDescription, analysis),
       parseJobPosting(jobDescription),
     ])
 

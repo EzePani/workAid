@@ -4,7 +4,20 @@ const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY,
 })
 
-export async function optimizeCV(cvText: string, jobDescription: string): Promise<string> {
+export async function optimizeCV(
+  cvText: string,
+  jobDescription: string,
+  analysis?: { missingSkills: string[]; suggestions: string[] },
+): Promise<string> {
+  const gapContext = analysis?.missingSkills.length
+    ? `
+GAP ANALYSIS (use this to prioritize reframing):
+- Skills the job requires that are not explicit in the CV: ${analysis.missingSkills.join(', ')}
+- Key recommendations to address: ${analysis.suggestions.join(' | ')}
+If any of these gaps can be addressed by reframing existing experience, do so. Never invent experience.
+`
+    : ''
+
   const completion = await groq.chat.completions.create({
     model: 'llama-3.3-70b-versatile',
     max_tokens: 4096,
@@ -26,7 +39,7 @@ RULES:
 8. Use clean, simple formatting — no tables, no columns, no graphics
 9. Quantify achievements where they already exist in the original CV
 10. Start with a concise 2-3 line professional summary tailored to this role
-
+${gapContext}
 FORMAT (follow this exact structure):
 ---
 EZEQUIEL PANIGAZZI
