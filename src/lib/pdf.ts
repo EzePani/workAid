@@ -99,14 +99,16 @@ export async function generateCVPdf(cvText: string): Promise<Uint8Array> {
     if (sep === -1) {
       const wrapped = wrapText(line, regular, BODY_SIZE, CONTENT_W)
       for (const l of wrapped) draw(l, MARGIN, regular, BODY_SIZE)
+      y -= 2  // extra gap between skill lines
       return
     }
-    const prefix = line.slice(0, sep + 2)   // "Category::"
-    const rest   = line.slice(sep + 2)       // " skill1, skill2"
-    const pw = textWidth(prefix, bold, BODY_SIZE)
+    const prefix  = line.slice(0, sep + 2)          // "Category::"
+    const rawRest = line.slice(sep + 2).trimStart()  // "skill1, skill2"
+    const gap     = ' '                              // one space after ::
+    const pw      = textWidth(prefix + gap, bold, BODY_SIZE)
     drawNoAdvance(prefix, MARGIN, bold, BODY_SIZE)
     const maxRest = CONTENT_W - pw
-    const wrapped = wrapText(rest.trimStart(), regular, BODY_SIZE, maxRest)
+    const wrapped = wrapText(rawRest, regular, BODY_SIZE, maxRest)
     for (let i = 0; i < wrapped.length; i++) {
       if (i === 0) {
         page.drawText(wrapped[i], { x: MARGIN + pw, y, size: BODY_SIZE, font: regular, color: BLACK })
@@ -115,6 +117,7 @@ export async function generateCVPdf(cvText: string): Promise<Uint8Array> {
         draw(wrapped[i], MARGIN + pw, regular, BODY_SIZE)
       }
     }
+    y -= 2  // extra gap between skill lines
   }
 
   // Bullet with hanging indent
@@ -133,8 +136,26 @@ export async function generateCVPdf(cvText: string): Promise<Uint8Array> {
     }
   }
 
+  // ── Pre-process: normalise markdown formatting to [TITLE]/[META] markers ────
+  // The LLM sometimes outputs **bold** or _italic_ instead of our markers.
+  function normalizeLine(l: string): string {
+    // **Job Title** | Location  →  [TITLE] Job Title | Location
+    if (/^\*\*[^*]+\*\*/.test(l) && !l.startsWith('[TITLE]')) {
+      return '[TITLE] ' + l.replace(/\*\*/g, '').trim()
+    }
+    // _Company | Dates_  →  [META] Company | Dates
+    if (/^_[^_]+_$/.test(l) && !l.startsWith('[META]')) {
+      return '[META] ' + l.replace(/^_|_$/g, '').trim()
+    }
+    // Strip any residual ** or _ used inline
+    return l.replace(/\*\*/g, '').replace(/(?<!\w)_([^_]+)_(?!\w)/g, '$1')
+  }
+
   // ── Parse and render ────────────────────────────────────────────────────────
-  const rawLines = cvText.split('\n').map(l => l.trim()).filter(l => l.length > 0)
+  const rawLines = cvText
+    .split('\n')
+    .map(l => normalizeLine(l.trim()))
+    .filter(l => l.length > 0)
 
   type Section = 'header' | 'profile' | 'experience' | 'skills' | 'languages' | 'other'
   let section: Section = 'header'
