@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
       parseJobPosting(jobDescription),
     ])
 
-    const pdfBytes = await generateCVPdf(optimizedCV, 'Ezequiel Panigazzi')
+    const pdfBytes = await generateCVPdf(optimizedCV)
 
     const role    = toSlug(extracted.role ?? 'Position')
     const company = toSlug(extracted.company ?? 'Company')
